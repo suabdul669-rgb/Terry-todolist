@@ -74,12 +74,13 @@ class KnowledgeBaseApp(tk.Tk):
         self.paned.add(self.text_frame, minsize=400)
 
     def populate_tree(self):
-        # 记录展开状态
-        expanded_items = set()
+        # 记录展开状态，使用目录ID
+        expanded_dir_ids = set()
         for item in self.tree.get_children():
-            self.get_expanded_items(item, expanded_items)
+            self.get_expanded_dir_ids(item, expanded_dir_ids)
         
         self.tree.delete(*self.tree.get_children())
+        
         def add_items(parent_id, tree_parent):
             dir_data = self.data['directories'][parent_id]
             tree_id = self.tree.insert(tree_parent, 'end', text=dir_data['name'], values=(parent_id, 'dir'))
@@ -91,24 +92,42 @@ class KnowledgeBaseApp(tk.Tk):
                 add_items(child_id, tree_id)
         add_items('root', '')
         
-        # 恢复展开状态，但只对存在的项目进行操作
-        for item_id in expanded_items:
-            try:
-                self.tree.item(item_id, open=True)
-            except tk.TclError:
-                # 项目不存在，跳过
-                pass
+        # 恢复展开状态，通过目录ID查找并展开对应节点
+        self.restore_expanded_by_dir_id(expanded_dir_ids)
+        
         # 确保根目录始终展开
         root_items = self.tree.get_children('')
         if root_items:
             self.tree.item(root_items[0], open=True)
 
-    def get_expanded_items(self, item, expanded_items):
-        """递归获取所有展开的项目"""
-        if self.tree.item(item, 'open'):
-            expanded_items.add(item)
+    def get_expanded_dir_ids(self, item, expanded_dir_ids):
+        """递归获取所有展开的目录ID"""
+        item_values = self.tree.item(item, 'values')
+        if item_values and len(item_values) > 0:
+            # 如果这是一个目录项并且是展开的，记录其ID
+            if item_values[1] == 'dir' and self.tree.item(item, 'open'):
+                dir_id = item_values[0]
+                expanded_dir_ids.add(dir_id)
+        
         for child in self.tree.get_children(item):
-            self.get_expanded_items(child, expanded_items)
+            self.get_expanded_dir_ids(child, expanded_dir_ids)
+
+    def restore_expanded_by_dir_id(self, expanded_dir_ids):
+        """根据目录ID恢复展开状态"""
+        def traverse_and_expand(parent):
+            for child in self.tree.get_children(parent):
+                child_values = self.tree.item(child, 'values')
+                if child_values and len(child_values) > 0:
+                    # 如果这是一个目录项，检查是否需要展开
+                    if child_values[1] == 'dir':
+                        dir_id = child_values[0]
+                        if dir_id in expanded_dir_ids:
+                            self.tree.item(child, open=True)
+                
+                # 递归处理子节点
+                traverse_and_expand(child)
+        
+        traverse_and_expand('')
 
     def on_tree_select(self, event):
         selected = self.tree.selection()
