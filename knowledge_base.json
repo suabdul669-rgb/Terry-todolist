@@ -1,0 +1,74 @@
+{
+  "notes": {
+    "f7c46b77-732c-4fd4-a019-2739cc340554": {
+      "id": "f7c46b77-732c-4fd4-a019-2739cc340554",
+      "title": "1",
+      "content": "3333",
+      "created_time": "2026-01-02T12:53:04.086370",
+      "modified_time": "2026-01-02T12:53:15.862364",
+      "versions": [
+        {
+          "title": "1",
+          "content": "",
+          "version_time": "2026-01-02T12:53:15.862359"
+        }
+      ]
+    },
+    "5514da3b-8af4-4cbd-8093-66a6d4570972": {
+      "id": "5514da3b-8af4-4cbd-8093-66a6d4570972",
+      "title": "2",
+      "content": "",
+      "created_time": "2026-01-02T12:53:06.839322",
+      "modified_time": "2026-01-02T12:53:06.839326",
+      "versions": []
+    },
+    "cbac5911-3c16-4d7c-bbd8-d2776b8e04ba": {
+      "id": "cbac5911-3c16-4d7c-bbd8-d2776b8e04ba",
+      "title": "3",
+      "content": "33333444",
+      "created_time": "2026-01-02T12:53:09.730224",
+      "modified_time": "2026-01-02T12:53:26.459659",
+      "versions": [
+        {
+          "title": "3",
+          "content": "",
+          "version_time": "2026-01-02T12:53:26.459653"
+        }
+      ]
+    }
+  },
+  "directories": {
+    "root": {
+      "id": "root",
+      "name": "根目录",
+      "parent_id": null,
+      "order": 0,
+      "children": [
+        "459432e4-89d8-47ec-a3db-735a7d011181"
+      ],
+      "notes": []
+    },
+    "459432e4-89d8-47ec-a3db-735a7d011181": {
+      "id": "459432e4-89d8-47ec-a3db-735a7d011181",
+      "name": "语文",
+      "parent_id": "root",
+      "order": 0,
+      "children": [
+        "78f79896-f64d-4e5e-8187-98530706b844"
+      ],
+      "notes": []
+    },
+    "78f79896-f64d-4e5e-8187-98530706b844": {
+      "id": "78f79896-f64d-4e5e-8187-98530706b844",
+      "name": "数学",
+      "parent_id": "459432e4-89d8-47ec-a3db-735a7d011181",
+      "order": 0,
+      "children": [],
+      "notes": [
+        "f7c46b77-732c-4fd4-a019-2739cc340554",
+        "5514da3b-8af4-4cbd-8093-66a6d4570972",
+        "cbac5911-3c16-4d7c-bbd8-d2776b8e04ba"
+      ]
+    }
+  }
+}
