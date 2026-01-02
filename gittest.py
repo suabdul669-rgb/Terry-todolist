@@ -68,6 +68,15 @@ class KnowledgeBaseApp(tk.Tk):
         self.text_frame = tk.Frame(self.paned)
         self.text = tk.Text(self.text_frame, wrap=tk.WORD)
         self.text.pack(fill=tk.BOTH, expand=True)
+        
+        # 为文本框绑定内容变更事件
+        self.text.bind('<KeyRelease>', self.on_text_change)
+        self.text.bind('<ButtonRelease-1>', self.on_text_change)
+        self.text.bind('<<Modified>>', self.on_text_modified)
+        
+        # 添加一个变量来跟踪是否需要保存
+        self.text_modified = False
+        
         self.save_button = tk.Button(self.text_frame, text="保存", command=self.save_note)
         self.save_button.pack(side=tk.BOTTOM)
 
@@ -129,26 +138,74 @@ class KnowledgeBaseApp(tk.Tk):
         
         traverse_and_expand('')
 
+    def on_text_change(self, event=None):
+        """处理文本变更事件"""
+        # 检查文本是否真的被修改
+        if self.current_note_id:
+            # 设置修改标志
+            self.text_modified = True
+            # 更改保存按钮的文本以提示用户
+            self.save_button.config(text="保存*")
+
+    def on_text_modified(self, event=None):
+        """处理文本修改事件"""
+        # 这个事件会在文本被修改时触发
+        self.on_text_change()
+
     def on_tree_select(self, event):
         selected = self.tree.selection()
         if selected:
             item = selected[0]
             item_id, item_type = self.tree.item(item, 'values')
             if item_type == 'note':
+                # 如果之前有编辑过的笔记且未保存，提示用户保存
+                if self.current_note_id and self.text_modified:
+                    self.ask_to_save_current_note()
+                
                 self.current_note_id = item_id
                 self.text.delete(1.0, tk.END)
                 self.text.insert(tk.END, self.data['notes'][item_id]['content'])
+                
+                # 重置修改标志
+                self.text_modified = False
+                self.save_button.config(text="保存")
             else:
+                # 如果切换到目录，检查是否有编辑过的笔记未保存
+                if self.current_note_id and self.text_modified:
+                    self.ask_to_save_current_note()
+                    
                 self.current_note_id = None
                 self.text.delete(1.0, tk.END)
 
-    def save_note(self):
+    def ask_to_save_current_note(self):
+        """询问用户是否保存当前笔记"""
+        if self.current_note_id and self.text_modified:
+            result = messagebox.askyesnocancel("保存更改", "笔记已修改，是否保存？")
+            if result is True:  # 用户选择保存
+                self.save_current_note_content()
+            elif result is False:  # 用户选择不保存
+                self.text_modified = False
+                self.save_button.config(text="保存")
+            # 如果选择取消，则什么都不做
+
+    def save_current_note_content(self):
+        """保存当前笔记内容"""
         if self.current_note_id:
             content = self.text.get(1.0, tk.END).strip()
             self.data['notes'][self.current_note_id]['content'] = content
             self.data['notes'][self.current_note_id]['modified_time'] = datetime.now().isoformat()
             self.save_data()
+            self.text_modified = False
+            self.save_button.config(text="保存")
             messagebox.showinfo("保存", "笔记已保存")
+
+    def save_note(self):
+        """保存当前编辑的文件"""
+        if self.current_note_id:
+            self.save_current_note_content()
+            messagebox.showinfo("保存", "笔记已保存")
+        else:
+            messagebox.showwarning("警告", "没有选中任何笔记")
 
     def show_tree_menu(self, event):
         item = self.tree.identify_row(event.y)
