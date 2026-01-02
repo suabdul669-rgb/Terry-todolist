@@ -74,6 +74,11 @@ class KnowledgeBaseApp(tk.Tk):
         self.paned.add(self.text_frame, minsize=400)
 
     def populate_tree(self):
+        # 记录展开状态
+        expanded_items = set()
+        for item in self.tree.get_children():
+            self.get_expanded_items(item, expanded_items)
+        
         self.tree.delete(*self.tree.get_children())
         def add_items(parent_id, tree_parent):
             dir_data = self.data['directories'][parent_id]
@@ -85,6 +90,25 @@ class KnowledgeBaseApp(tk.Tk):
             for child_id in dir_data['children']:
                 add_items(child_id, tree_id)
         add_items('root', '')
+        
+        # 恢复展开状态，但只对存在的项目进行操作
+        for item_id in expanded_items:
+            try:
+                self.tree.item(item_id, open=True)
+            except tk.TclError:
+                # 项目不存在，跳过
+                pass
+        # 确保根目录始终展开
+        root_items = self.tree.get_children('')
+        if root_items:
+            self.tree.item(root_items[0], open=True)
+
+    def get_expanded_items(self, item, expanded_items):
+        """递归获取所有展开的项目"""
+        if self.tree.item(item, 'open'):
+            expanded_items.add(item)
+        for child in self.tree.get_children(item):
+            self.get_expanded_items(child, expanded_items)
 
     def on_tree_select(self, event):
         selected = self.tree.selection()
