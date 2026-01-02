@@ -146,6 +146,28 @@ class KnowledgeBaseApp(tk.Tk):
             self.text_modified = True
             # 更改保存按钮的文本以提示用户
             self.save_button.config(text="保存*")
+            
+            # 自动保存内容
+            self.auto_save_note_content()
+
+    def auto_save_note_content(self):
+        """自动保存当前笔记内容（延迟保存以避免频繁保存）"""
+        # 取消之前的自动保存任务（如果存在）
+        if hasattr(self, '_auto_save_job') and self._auto_save_job:
+            self.after_cancel(self._auto_save_job)
+        
+        # 设置一个延迟任务，如果在1秒内没有新的更改，则执行保存
+        self._auto_save_job = self.after(1000, self.execute_auto_save)
+
+    def execute_auto_save(self):
+        """执行自动保存"""
+        if self.current_note_id and self.text_modified:
+            content = self.text.get(1.0, tk.END).strip()
+            self.data['notes'][self.current_note_id]['content'] = content
+            self.data['notes'][self.current_note_id]['modified_time'] = datetime.now().isoformat()
+            self.save_data()
+            self.text_modified = False
+            self.save_button.config(text="保存")
 
     def on_text_modified(self, event=None):
         """处理文本修改事件"""
@@ -158,9 +180,9 @@ class KnowledgeBaseApp(tk.Tk):
             item = selected[0]
             item_id, item_type = self.tree.item(item, 'values')
             if item_type == 'note':
-                # 如果之前有编辑过的笔记且未保存，提示用户保存
+                # 如果之前有编辑过的笔记且未保存，自动保存
                 if self.current_note_id and self.text_modified:
-                    self.ask_to_save_current_note()
+                    self.execute_auto_save()
                 
                 self.current_note_id = item_id
                 self.text.delete(1.0, tk.END)
@@ -170,23 +192,16 @@ class KnowledgeBaseApp(tk.Tk):
                 self.text_modified = False
                 self.save_button.config(text="保存")
             else:
-                # 如果切换到目录，检查是否有编辑过的笔记未保存
+                # 如果切换到目录，自动保存当前笔记
                 if self.current_note_id and self.text_modified:
-                    self.ask_to_save_current_note()
+                    self.execute_auto_save()
                     
                 self.current_note_id = None
                 self.text.delete(1.0, tk.END)
 
     def ask_to_save_current_note(self):
-        """询问用户是否保存当前笔记"""
-        if self.current_note_id and self.text_modified:
-            result = messagebox.askyesnocancel("保存更改", "笔记已修改，是否保存？")
-            if result is True:  # 用户选择保存
-                self.save_current_note_content()
-            elif result is False:  # 用户选择不保存
-                self.text_modified = False
-                self.save_button.config(text="保存")
-            # 如果选择取消，则什么都不做
+        """询问用户是否保存当前笔记 - 不再使用此功能"""
+        pass
 
     def save_current_note_content(self):
         """保存当前笔记内容"""
@@ -202,7 +217,8 @@ class KnowledgeBaseApp(tk.Tk):
     def save_note(self):
         """保存当前编辑的文件"""
         if self.current_note_id:
-            self.save_current_note_content()
+            # 立即执行保存
+            self.execute_auto_save()
             messagebox.showinfo("保存", "笔记已保存")
         else:
             messagebox.showwarning("警告", "没有选中任何笔记")
